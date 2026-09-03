@@ -47,9 +47,11 @@ class Finding:
     message: str
     path: str = ""
     hint: str = ""
+    line: int | None = None  # 1-based source line, filled during annotation
+    snippet: str = ""  # the source line text, filled during annotation
 
     def as_dict(self) -> dict:
-        return {
+        data: dict = {
             "code": self.code,
             "severity": self.severity.label,
             "title": self.title,
@@ -57,6 +59,10 @@ class Finding:
             "path": self.path,
             "hint": self.hint,
         }
+        if self.line is not None:
+            data["line"] = self.line
+            data["snippet"] = self.snippet
+        return data
 
 
 @dataclass

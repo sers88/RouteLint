@@ -39,6 +39,8 @@ def render_text(report: Report, *, use_color: bool = False) -> str:
     for f in sorted(report.findings, key=lambda f: -f.severity):
         sev = f.severity.label.upper()
         lines.append(f"  [{sev:<5}] {f.code}  {f.title}")
+        if f.line is not None:
+            lines.append(f"          line {f.line}: {f.snippet}")
         if f.path:
             lines.append(f"          path: {f.path}")
         lines.append(f"          {f.message}")
