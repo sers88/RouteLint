@@ -11,11 +11,13 @@ from __future__ import annotations
 import argparse
 import contextlib
 import sys
+from dataclasses import replace
 from pathlib import Path
 
 from . import __version__
 from .engine import run_semantic_layer
 from .loader import ConfigError, build_ctx, load_config
+from .locate import resolve_line, snippet_for
 from .model import Finding, LayerResult, Report, Severity
 from .native_validator import run_native_layer
 from .reporters import render
@@ -91,10 +93,24 @@ def run(args: argparse.Namespace) -> int:
 
     min_sev = Severity.parse(args.min_severity)
     report.findings = [f for f in report.findings if f.severity >= min_sev]
+    _annotate(report.findings, config, config_path)
 
     _emit(report, args)
     worst = report.max_severity()
     return EXIT_FINDINGS if worst is not None and worst >= Severity.ERROR else EXIT_OK
+
+
+def _annotate(findings: list[Finding], config: dict, config_path: Path) -> None:
+    """Fill in line numbers and source snippets for findings that have a path."""
+    try:
+        lines = config_path.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return
+    for i, f in enumerate(findings):
+        line = resolve_line(config, f.path)
+        if line is None:
+            continue
+        findings[i] = replace(f, line=line, snippet=snippet_for(lines, line))
 
 
 def _emit(report: Report, args: argparse.Namespace) -> None:
