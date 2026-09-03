@@ -84,6 +84,59 @@ def test_no_cycle():
     assert check_one(GroupCycles(), cfg) == []
 
 
+def test_shared_subgroup_is_not_a_cycle():
+    # regression for #1: cross-edge used to crash with ValueError
+    cfg = {
+        "proxies": [{"name": "p"}],
+        "proxy-groups": [
+            {"name": "A", "type": "select", "proxies": ["SHARED"]},
+            {"name": "B", "type": "select", "proxies": ["SHARED"]},
+            {"name": "SHARED", "type": "select", "proxies": ["p"]},
+        ],
+    }
+    assert check_one(GroupCycles(), cfg) == []
+
+
+def test_diamond_is_not_a_cycle():
+    cfg = {
+        "proxy-groups": [
+            {"name": "TOP", "type": "select", "proxies": ["L", "R"]},
+            {"name": "L", "type": "select", "proxies": ["MID"]},
+            {"name": "R", "type": "select", "proxies": ["MID"]},
+            {"name": "MID", "type": "select", "proxies": ["DIRECT"]},
+        ],
+    }
+    assert check_one(GroupCycles(), cfg) == []
+
+
+def test_two_independent_cycles():
+    cfg = {
+        "proxy-groups": [
+            {"name": "a", "type": "select", "proxies": ["b"]},
+            {"name": "b", "type": "select", "proxies": ["a"]},
+            {"name": "x", "type": "select", "proxies": ["y"]},
+            {"name": "y", "type": "select", "proxies": ["x"]},
+        ],
+    }
+    assert len(check_one(GroupCycles(), cfg)) == 2
+
+
+def test_cycle_behind_shared_node():
+    # a -> shared -> loop, reached from two parents: reported once
+    cfg = {
+        "proxy-groups": [
+            {"name": "p1", "type": "select", "proxies": ["shared"]},
+            {"name": "p2", "type": "select", "proxies": ["shared"]},
+            {"name": "shared", "type": "select", "proxies": ["loop-a"]},
+            {"name": "loop-a", "type": "select", "proxies": ["loop-b"]},
+            {"name": "loop-b", "type": "select", "proxies": ["loop-a"]},
+        ],
+    }
+    findings = check_one(GroupCycles(), cfg)
+    assert [f.code for f in findings] == ["CYC001"]
+    assert "loop-a -> loop-b -> loop-a" in findings[0].message
+
+
 # --- shadowing ----------------------------------------------------------
 
 

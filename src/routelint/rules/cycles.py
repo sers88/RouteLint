@@ -6,26 +6,35 @@ from ..loader import Ctx
 from ..model import Finding, Severity
 from . import Rule
 
+#: node states for cycle detection (3-colour DFS)
+_WHITE, _GREY, _BLACK = 0, 1, 2
 
-def find_cycle(groups: dict[str, list], start: str) -> list[str] | None:
+
+def find_cycles(groups: dict[str, list]) -> list[list[str]]:
+    """Return every include cycle in `groups` as a path like [A, B, A]."""
+    color: dict[str, int] = {name: _WHITE for name in groups}
     path: list[str] = []
-    seen: set[str] = set()
+    cycles: list[list[str]] = []
 
-    def dfs(node: str) -> list[str] | None:
-        if node in seen:
-            return path[path.index(node):] + [node]
+    def dfs(node: str) -> None:
         if node not in groups:
-            return None
-        seen.add(node)
+            return
+        state = color.get(node, _WHITE)
+        if state == _BLACK:
+            return
+        if state == _GREY:  # back-edge -> cycle
+            cycles.append(path[path.index(node):] + [node])
+            return
+        color[node] = _GREY
         path.append(node)
         for member in groups[node]:
-            cycle = dfs(member)
-            if cycle:
-                return cycle
+            dfs(member)
         path.pop()
-        return None
+        color[node] = _BLACK
 
-    return dfs(start)
+    for name in groups:
+        dfs(name)
+    return cycles
 
 
 class GroupCycles(Rule):
@@ -34,23 +43,17 @@ class GroupCycles(Rule):
 
     def check(self, ctx: Ctx) -> list[Finding]:
         findings = []
-        reported: frozenset[str] = frozenset()
-        for name in ctx.groups_order:
-            if name in reported:
-                continue
-            cycle = find_cycle(ctx.groups, name)
-            if cycle:
-                chain = " -> ".join(cycle)
-                findings.append(
-                    Finding(
-                        code="CYC001",
-                        severity=Severity.ERROR,
-                        title="proxy-group cycle",
-                        message=f"circular group reference: {chain}",
-                        hint="mihomo resolves groups lazily; cycles produce dead groups or startup errors",
-                    )
+        for cycle in find_cycles(ctx.groups):
+            chain = " -> ".join(cycle)
+            findings.append(
+                Finding(
+                    code="CYC001",
+                    severity=Severity.ERROR,
+                    title="proxy-group cycle",
+                    message=f"circular group reference: {chain}",
+                    hint="mihomo resolves groups lazily; cycles produce dead groups or startup errors",
                 )
-                reported = frozenset(set(reported) | set(cycle[:-1]))
+            )
         return findings
 
 
