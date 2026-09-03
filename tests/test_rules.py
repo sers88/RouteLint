@@ -305,3 +305,18 @@ def test_subrule_reference_ok():
     }
     assert check_one(MissingRuleTargets(), cfg) == []
 
+
+
+def test_broad_multi_offender_deduped():
+    cfg = {
+        "rules": [
+            "IP-CIDR,1.2.3.4/32,PROXY",
+            "IP-CIDR,5.6.7.8/32,PROXY",
+            "DST-PORT,80,PROXY",
+            "DOMAIN-SUFFIX,example.com,DIRECT",
+            "MATCH,PROXY",
+        ]
+    }
+    findings = check_one(BroadBeforeSpecific(), cfg)
+    assert [f.code for f in findings] == ["RTORD001"]
+    assert "rules[0, 1, 2]" in findings[0].message

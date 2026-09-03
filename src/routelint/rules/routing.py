@@ -72,10 +72,11 @@ class BroadBeforeSpecific(Rule):
     description = "IP/port rules placed before more specific domain rules"
 
     def check(self, ctx: Ctx) -> list[Finding]:
-        findings = []
         rules = [r for r in ctx.config.get("rules") or [] if isinstance(r, str)]
         specific_types = {"DOMAIN", "DOMAIN-SUFFIX", "DOMAIN-KEYWORD", "GEOSITE"}
         broad_types = {"IP-CIDR", "IP-CIDR6", "GEOIP", "DST-PORT", "SRC-PORT", "SRC-IP-CIDR"}
+        # shadowed rule -> list of broad rules shadowing it (deduped per shadowed rule)
+        shadows: dict[int, list[int]] = {}
         for i, rule in enumerate(rules):
             p = _parts(rule)
             if not p or p[0].upper() not in broad_types:
@@ -85,20 +86,29 @@ class BroadBeforeSpecific(Rule):
                 if not q:
                     continue
                 if q[0].upper() in specific_types and _target(p) != _target(q):
-                    findings.append(
-                        Finding(
-                            code="RTORD001",
-                            severity=Severity.WARN,
-                            title="broad rule shadows later domain rules",
-                            message=(
-                                f"rules[{i}] ({p[0].upper()}) matches by IP/port before rules[{j}] ({q[0].upper()}); "
-                                f"domains resolving into that range will take the earlier rule"
-                            ),
-                            path=f"rules[{j}]",
-                            hint="put DOMAIN/GEOSITE rules before IP-CIDR/GEOIP rules",
-                        )
-                    )
-                    break
+                    shadows.setdefault(j, []).append(i)
+
+        findings = []
+        for j, offenders in sorted(shadows.items()):
+            q = _parts(rules[j])
+            if len(offenders) == 1:
+                detail = f"rules[{offenders[0]}] ({_parts(rules[offenders[0]])[0].upper()})"
+            else:
+                kinds = ", ".join(sorted({_parts(rules[i])[0].upper() for i in offenders}))
+                detail = f"rules[{', '.join(str(i) for i in offenders)}] ({kinds})"
+            findings.append(
+                Finding(
+                    code="RTORD001",
+                    severity=Severity.WARN,
+                    title="broad rule shadows later domain rules",
+                    message=(
+                        f"{detail} matches by IP/port before rules[{j}] ({q[0].upper()}); "
+                        f"domains resolving into that range will take the earlier rule"
+                    ),
+                    path=f"rules[{j}]",
+                    hint="put DOMAIN/GEOSITE rules before IP-CIDR/GEOIP rules",
+                )
+            )
         return findings
 
 
