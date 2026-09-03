@@ -35,7 +35,10 @@ class ControllerExposure(Rule):
                     title="external-controller exposed without secret",
                     message=f"external-controller {ec!r} listens on all interfaces with no `secret` set",
                     path="external-controller",
-                    hint="anyone on the network can read traffic and reconfigure the proxy; set a secret or bind to 127.0.0.1",
+                    hint=(
+                        "set a `secret`, or bind to 127.0.0.1; binding 0.0.0.0 is normal in "
+                        "docker/tproxy deployments — make sure the port is not reachable from untrusted networks"
+                    ),
                 )
             ]
         if public:

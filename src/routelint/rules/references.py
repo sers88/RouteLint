@@ -107,6 +107,10 @@ class DuplicateNames(Rule):
         return findings
 
 
+#: names with special meaning in clash/mihomo that need no explicit references
+SPECIAL_GROUP_NAMES = {"GLOBAL"}
+
+
 class Unused(Rule):
     code = "UNUSED"
     description = "proxies/groups never referenced by any group or rule"
@@ -126,7 +130,7 @@ class Unused(Rule):
                 )
             )
         for group in ctx.groups_order:
-            if group in referenced:
+            if group in referenced or group in SPECIAL_GROUP_NAMES:
                 continue
             findings.append(
                 Finding(

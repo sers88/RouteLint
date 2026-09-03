@@ -58,6 +58,18 @@ def test_unused_proxy_and_group():
     assert "UNUSED001" in found and "UNUSED002" in found
 
 
+def test_global_group_is_special():
+    # GLOBAL has built-in meaning; not an unused-group false positive (issue #3)
+    cfg = {
+        "proxies": [{"name": "p"}],
+        "proxy-groups": [
+            {"name": "GLOBAL", "type": "select", "proxies": ["p"]},
+        ],
+        "rules": ["MATCH,DIRECT"],
+    }
+    assert "UNUSED002" not in codes(check_one(Unused(), cfg))
+
+
 # --- cycles -------------------------------------------------------------
 
 
