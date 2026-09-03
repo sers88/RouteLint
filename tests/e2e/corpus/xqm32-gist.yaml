@@ -1,0 +1,183 @@
+# Source: https://gist.github.com/xqm32/266a7ecdf8363dbf8dddabbf5f6643a7
+# Vendored for routelint e2e corpus (see issue #2).
+##### 使用说明 #####
+# 1. 请填写 proxy-providers - subscribe - url 为订阅链接
+# 2. 下载 https://github.com/Loyalsoldier/clash-rules/archive/refs/heads/release.zip 并解压至 ./profiles/ruleset 文件夹下
+# 3. 若需要自动更新 ruleset, 请编辑 rule-providers-config - type 为 http
+
+##### 参考链接 #####
+# 1. clash 样例配置文件
+#    https://lancellc.gitbook.io/clash/clash-config-file/an-example-configuration-file
+# 2. clash 规则集
+#    https://github.com/Loyalsoldier/clash-rules
+# 3. clash 自定义配置教程
+#    https://donnadie.top/manage-clashx-custom-config/
+# 4. clash 自定义配置样例
+#    https://gist.github.com/ricky9w/31fffc1b6eadadba2603f323dc92bebf
+# 5. clash 自动替换订阅规则
+#    https://github.com/Fndroid/clash_for_windows_pkg/issues/2193
+# 6. mihomo Wiki
+#    https://wiki.metacubex.one
+# 7. mihomo 默认值
+#    https://github.com/MetaCubeX/mihomo/blob/a034421a58674dd80399702de657250910bfeac3/config/config.go#L393
+# 8. mihomo-default-config 生成器
+#    https://github.com/xqm32/mihomo-default-config
+
+proxy-providers-config: &proxy-providers-config
+  type: http
+  interval: 3600
+  health-check:
+    # 选中时是否进行测试
+    enable: false
+    interval: 600
+    url: http://www.gstatic.com/generate_204
+
+# 存放于 ./profiles/proxies 文件夹下
+proxy-providers:
+  suba:
+    <<: *proxy-providers-config
+    # 订阅链接, 订阅文件应当为 yaml 格式, 否则应当进行订阅转换
+    # 同一个订阅链接可能会根据不同的 User-Agent 返回不同的内容
+    # 请测试 User-Agent 为 clash/clash.meta 时是否返回 yaml
+    url: "suba.com"
+    # 存在多个订阅时请修改此路径以避免冲突
+    path: ./profiles/proxies/suba.yaml
+
+  subb:
+    <<: *proxy-providers-config
+    url: "subb.com"
+    path: ./profiles/proxies/subb.yaml
+
+proxy-groups:
+  - name: PROXY
+    type: select
+    proxies:
+      - SUBA
+      - SUBB
+
+  - name: SUBA
+    type: select
+    use:
+      - suba
+
+  - name: SUBB
+    type: select
+    use:
+      - subb
+
+# 注意: 该功能需要 clash premium 或 mihomo 支持
+# 使用 clash-rules 提供的规则, 存放于 ./profiles/ruleset 文件夹下
+# https://github.com/Loyalsoldier/clash-rules
+rule-providers-config: &rule-providers-config
+  type: http
+  interval: 86400
+
+# url 也可以为 https://raw.githubusercontent.com/Loyalsoldier/clash-rules/release
+rule-providers:
+  reject:
+    <<: *rule-providers-config
+    behavior: domain
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/reject.txt"
+    path: ./profiles/ruleset/reject.txt
+
+  icloud:
+    <<: *rule-providers-config
+    behavior: domain
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/icloud.txt"
+    path: ./profiles/ruleset/icloud.txt
+
+  apple:
+    <<: *rule-providers-config
+    behavior: domain
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/apple.txt"
+    path: ./profiles/ruleset/apple.txt
+
+  google:
+    <<: *rule-providers-config
+    behavior: domain
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/google.txt"
+    path: ./profiles/ruleset/google.txt
+
+  proxy:
+    <<: *rule-providers-config
+    behavior: domain
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/proxy.txt"
+    path: ./profiles/ruleset/proxy.txt
+
+  direct:
+    <<: *rule-providers-config
+    behavior: domain
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/direct.txt"
+    path: ./profiles/ruleset/direct.txt
+
+  private:
+    <<: *rule-providers-config
+    behavior: domain
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/private.txt"
+    path: ./profiles/ruleset/private.txt
+
+  gfw:
+    <<: *rule-providers-config
+    behavior: domain
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/gfw.txt"
+    path: ./profiles/ruleset/gfw.txt
+
+  greatfire:
+    <<: *rule-providers-config
+    behavior: domain
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/greatfire.txt"
+    path: ./profiles/ruleset/greatfire.txt
+
+  tld-not-cn:
+    <<: *rule-providers-config
+    behavior: domain
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/tld-not-cn.txt"
+    path: ./profiles/ruleset/tld-not-cn.txt
+
+  telegramcidr:
+    <<: *rule-providers-config
+    behavior: ipcidr
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/telegramcidr.txt"
+    path: ./profiles/ruleset/telegramcidr.txt
+
+  cncidr:
+    <<: *rule-providers-config
+    behavior: ipcidr
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/cncidr.txt"
+    path: ./profiles/ruleset/cncidr.txt
+
+  lancidr:
+    <<: *rule-providers-config
+    behavior: ipcidr
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/lancidr.txt"
+    path: ./profiles/ruleset/lancidr.txt
+
+  applications:
+    <<: *rule-providers-config
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/applications.txt"
+    path: ./profiles/ruleset/applications.txt
+
+# 这里使用白名单模式, 若要使用黑名单模式, 请参考:
+# https://github.com/Loyalsoldier/clash-rules
+rules:
+  - DOMAIN-SUFFIX,mihoyo.com,DIRECT
+  - DOMAIN-SUFFIX,bing.com,DIRECT
+  - DST-PORT,22,DIRECT
+  # 以下是默认规则
+  - RULE-SET,applications,DIRECT
+  - DOMAIN,clash.razord.top,DIRECT
+  - DOMAIN,yacd.haishan.me,DIRECT
+  - RULE-SET,private,DIRECT
+  - RULE-SET,reject,REJECT
+  - RULE-SET,icloud,DIRECT
+  - RULE-SET,apple,DIRECT
+  - RULE-SET,google,DIRECT
+  - RULE-SET,proxy,PROXY
+  - RULE-SET,direct,DIRECT
+  - RULE-SET,lancidr,DIRECT
+  - RULE-SET,cncidr,DIRECT
+  - RULE-SET,telegramcidr,PROXY
+  - GEOIP,LAN,DIRECT
+  - GEOIP,CN,DIRECT
+  - MATCH,PROXY

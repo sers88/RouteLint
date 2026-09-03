@@ -1,0 +1,18 @@
+[
+  {
+    "code": "DNSLISTEN001",
+    "severity": "warn"
+  },
+  {
+    "code": "DNSSAN001",
+    "severity": "error"
+  },
+  {
+    "code": "SEC003",
+    "severity": "info"
+  },
+  {
+    "code": "UNUSED002",
+    "severity": "info"
+  }
+]

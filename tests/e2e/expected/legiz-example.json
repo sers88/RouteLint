@@ -1,0 +1,10 @@
+[
+  {
+    "code": "DNSLISTEN001",
+    "severity": "warn"
+  },
+  {
+    "code": "RULE002",
+    "severity": "error"
+  }
+]
