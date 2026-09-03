@@ -9,6 +9,7 @@ Exit codes:
 from __future__ import annotations
 
 import argparse
+import contextlib
 import sys
 from pathlib import Path
 
@@ -100,7 +101,18 @@ def _emit(report: Report, args: argparse.Namespace) -> None:
     print(render(report, fmt=args.format))
 
 
+def _force_utf8_streams() -> None:
+    # Windows consoles often use a legacy codepage (cp1251 etc.); config names
+    # routinely contain emoji, which would crash print() with UnicodeEncodeError.
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if callable(reconfigure):
+            with contextlib.suppress(OSError, ValueError):
+                reconfigure(encoding="utf-8", errors="replace")
+
+
 def main(argv: list[str] | None = None) -> int:
+    _force_utf8_streams()
     args = build_parser().parse_args(argv)
     try:
         return run(args)

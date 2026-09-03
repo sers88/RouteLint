@@ -134,3 +134,27 @@ def test_severity_parse():
         Severity.parse("bogus")
 
 
+def test_unicode_output_on_legacy_codepage(tmp_path, monkeypatch):
+    # regression for #5: emoji names must not crash print() on cp1251 consoles
+    import io
+    import sys
+
+    cfg = _write(
+        tmp_path,
+        "proxy-groups:\n"
+        "  - {name: '\U0001f30d Global', type: select, proxies: [DIRECT]}\n"
+        "rules:\n"
+        "  - MATCH,DIRECT\n",
+    )
+    buf = io.BytesIO()
+    stream = io.TextIOWrapper(buf, encoding="cp1251")
+    monkeypatch.setattr(sys, "stdout", stream)
+    try:
+        rc = main([str(cfg), "--no-native"])
+    finally:
+        stream.flush()
+    assert rc == EXIT_OK
+    out = buf.getvalue().decode("utf-8")
+    assert "\U0001f30d" in out
+
+
