@@ -12,6 +12,8 @@ It does **not** replace `mihomo -t` — it complements it with three layers:
 
 The semantic layer finds real-world config bugs: dangling proxy/group/provider references, circular groups, unreachable rules after `MATCH`, an exposed `external-controller` without a secret, `external-ui` misconfiguration, DNS leak risks (TUN without DNS), and common routing anti-patterns (`GEOIP,CN` via proxy, broad IP rules shadowing domain rules, `MATCH,REJECT`, ...).
 
+Real-world catch (from a public config): `dns.enable: true` with the whole `nameserver` block commented out — mihomo starts, DNS silently breaks. RouteLint flags it as `DNSSAN001` (error).
+
 RouteLint is an independent tool and is not affiliated with the Mihomo / Clash.Meta projects; their binaries are invoked via the local `PATH` only when requested.
 
 ## Install

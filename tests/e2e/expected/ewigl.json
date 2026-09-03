@@ -10,9 +10,5 @@
   {
     "code": "SEC003",
     "severity": "info"
-  },
-  {
-    "code": "UNUSED002",
-    "severity": "info"
   }
 ]
