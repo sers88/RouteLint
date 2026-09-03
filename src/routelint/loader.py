@@ -24,6 +24,7 @@ class Ctx:
     groups: dict[str, list] = field(default_factory=dict)  # name -> proxies list
     proxy_providers: set[str] = field(default_factory=set)
     rule_providers: set[str] = field(default_factory=set)
+    sub_rules: dict[str, list] = field(default_factory=dict)  # name -> rules
     rule_targets: set[str] = field(default_factory=set)  # policies referenced by rules
 
     @property
@@ -63,12 +64,28 @@ def build_ctx(config: dict) -> Ctx:
         ctx.proxy_providers.add(str(name))
     for name in config.get("rule-providers") or {}:
         ctx.rule_providers.add(str(name))
+    ctx.sub_rules.update(_sub_rules(config))
     for rule in config.get("rules") or []:
         if isinstance(rule, str):
             target = rule_target(rule)
             if target:
                 ctx.rule_targets.add(target)
     return ctx
+
+
+def _sub_rules(config: dict) -> dict[str, list]:
+    """Normalize `sub-rules` (map or list of single-key maps) to name -> rules."""
+    raw = config.get("sub-rules") or {}
+    result: dict[str, list] = {}
+    if isinstance(raw, dict):
+        for name, rules in raw.items():
+            result[str(name)] = list(rules or [])
+    elif isinstance(raw, list):
+        for entry in raw:
+            if isinstance(entry, dict):
+                for name, rules in entry.items():
+                    result[str(name)] = list(rules or [])
+    return result
 
 
 def rule_target(rule: str) -> str | None:

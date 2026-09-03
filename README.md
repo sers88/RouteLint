@@ -76,6 +76,8 @@ Findings (3): 1 high, 1 error, 1 warn
 |---|---|
 | `SCHEMA`, `NATIVE`, `CONFIG` | layer-level failures |
 | `REF`, `RULE`, `DUP`, `UNUSED` | reference integrity |
+| `PROV`, `PROVU` | proxy-provider hygiene |
+| `INB` | inbound exposure (LAN without auth) |
 | `CYC` | group cycles |
 | `SHD`, `DUPRULE` | rule shadowing / duplicates |
 | `SEC`, `UI` | control-plane security |

@@ -15,10 +15,10 @@ class Rule:
 
 
 def _load_rules() -> list[Rule]:
-    from . import cycles, dns, references, routing, security, shadowing
+    from . import cycles, dns, inbound, providers, references, routing, security, shadowing
 
     rules: list[Rule] = []
-    for module in (references, cycles, shadowing, security, dns, routing):
+    for module in (references, cycles, shadowing, security, dns, providers, inbound, routing):
         rules.extend(module.RULES)
     return rules
 

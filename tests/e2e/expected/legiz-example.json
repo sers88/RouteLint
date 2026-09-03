@@ -4,6 +4,10 @@
     "severity": "warn"
   },
   {
+    "code": "INB001",
+    "severity": "warn"
+  },
+  {
     "code": "RULE002",
     "severity": "error"
   }

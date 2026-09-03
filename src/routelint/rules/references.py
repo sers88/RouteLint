@@ -65,6 +65,19 @@ class MissingRuleTargets(Rule):
                             path=f"rules[{ri}]",
                         )
                     )
+            if parts and parts[0].upper() == "SUB-RULE":
+                sub = parts[-1].strip()
+                if sub not in ctx.sub_rules:
+                    findings.append(
+                        Finding(
+                            code="RULE003",
+                            severity=Severity.ERROR,
+                            title="SUB-RULE references missing sub-rule",
+                            message=f"rule references sub-rule {sub!r} not defined in sub-rules",
+                            path=f"rules[{ri}]",
+                        )
+                    )
+                continue
             target = rule_target(rule)
             if target and target not in known:
                 findings.append(
