@@ -1,4 +1,5 @@
 from helpers import check_one, codes
+from routelint.model import Severity
 from routelint.rules.cycles import GroupCycles
 from routelint.rules.dns import DnsListenPublic, DnsSanity, TunWithoutDns
 from routelint.rules.references import DuplicateNames, MissingGroupRefs, MissingRuleTargets, Unused
@@ -106,7 +107,8 @@ def test_duplicate_rule():
 
 def test_controller_public_no_secret():
     cfg = {"external-controller": "0.0.0.0:9090"}
-    assert codes(check_one(ControllerExposure(), cfg)) == ["SEC001"]
+    (finding,) = check_one(ControllerExposure(), cfg)
+    assert finding.code == "SEC001" and finding.severity == Severity.WARN
 
 
 def test_controller_public_with_secret():

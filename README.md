@@ -41,7 +41,7 @@ Missing layers degrade gracefully: no `--schema` → schema layer is `skipped`; 
 - `info` — worth knowing (unused proxy, no explicit `MATCH`)
 - `warn` — likely a mistake (duplicate rules, open DNS listener, `GEOIP,CN` via proxy)
 - `error` — config is broken or rules are unreachable
-- `high` — security/leak risk (exposed API without secret, TUN without DNS)
+- `high` — security/leak risk (TUN without DNS)
 
 ### Exit codes
 

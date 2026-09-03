@@ -31,7 +31,7 @@ class ControllerExposure(Rule):
             return [
                 Finding(
                     code="SEC001",
-                    severity=Severity.HIGH,
+                    severity=Severity.WARN,
                     title="external-controller exposed without secret",
                     message=f"external-controller {ec!r} listens on all interfaces with no `secret` set",
                     path="external-controller",

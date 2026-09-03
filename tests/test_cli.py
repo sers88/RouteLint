@@ -71,7 +71,8 @@ def test_bad_config_findings_and_exit_code(tmp_path, capsys):
     data = json.loads(capsys.readouterr().out)
     found = {f["code"] for f in data["findings"]}
     assert {"SEC001", "CYC001", "SHD001", "RT001"} <= found
-    assert any(f["severity"] == "high" for f in data["findings"])
+    sec = next(f for f in data["findings"] if f["code"] == "SEC001")
+    assert sec["severity"] == "warn"
 
 
 def test_min_severity_filters(tmp_path, capsys):
