@@ -1,0 +1,81 @@
+# Source: https://gist.github.com/zozx/4e94a7807800982ca982057a8093612b
+# Vendored for routelint e2e corpus (see issue #2).
+tproxy-port: 7893
+dns:
+  enable: true
+  listen: 0.0.0.0:6868
+  default-nameserver:
+    - 223.5.5.5
+    - 8.8.8.8
+  enhanced-mode: redir-host
+  nameserver:
+    - 223.5.5.5
+    - 223.6.6.6
+  fallback:
+    - 8.8.8.8
+    - 8.8.4.4
+iptables:
+  enable: true
+  inbound-interface: wlan0
+allow-lan: false
+mode: rule
+log-level: info
+ipv6: false
+external-controller: 127.0.0.1:9090
+external-ui: ./clash-dashboard
+interface-name: wlan0
+rules:
+  - GEOSITE,category-ads-all,REJECT
+  - GEOSITE,icloud@cn,DIRECT
+  - GEOSITE,apple@cn,DIRECT
+  - GEOSITE,apple-cn,DIRECT
+  - GEOSITE,microsoft@cn,DIRECT
+  - GEOSITE,facebook,PROXY
+  - GEOSITE,youtube,PROXY
+  - GEOSITE,geolocation-cn,DIRECT
+  - GEOSITE,geolocation-!cn,PROXY
+  - GEOIP,telegram,PROXY,no-resolve
+  - GEOIP,private,DIRECT,no-resolve
+  - GEOIP,cn,DIRECT
+  - MATCH,PROXY
+
+proxy-groups:
+  - name: PROXY
+    type: select
+    proxies:
+      - "KR | Azure"
+      - "JP | Azure"
+      - "FR | Azure"
+
+proxies:
+  - name: "KR | Azure"
+    type: trojan
+    server: "kr.rycbar.top"
+    port: 443
+    password: "c8514130-9d3a-4f7a-97cf-ad92e71015a8"
+    network: ws
+    ws-opts:
+      path: "/fb406189-642c-4587-935c-01b4eec392e7"
+  
+  - name: "JP | Azure"
+    type: vless
+    server: "jp.rycbar.top"
+    port: 443
+    uuid: "cc612472-6d21-48d6-fae2-fcc66b52392e"
+    tls: true
+    cipher: none
+    network: ws
+    ws-opts:
+      path: "/cc612472-6d21-48d6-fae2-fcc66b52392e"
+
+  - name: "FR | Azure"
+    type: vmess
+    server: "fr.rycbar.top"
+    port: 443
+    uuid: "6d71b223-91ca-4d1e-a725-6aa4fc91c772"
+    alterId: 0
+    tls: true
+    cipher: none
+    network: ws
+    ws-opts:
+      path: "/6d71b223-91ca-4d1e-a725-6aa4fc91c772"

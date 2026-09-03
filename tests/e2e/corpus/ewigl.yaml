@@ -1,0 +1,192 @@
+# Source: https://github.com/ewigl/mihomo/blob/main/config.yaml
+# Vendored for routelint e2e corpus (see issue #2).
+mode: rule
+log-level: warning
+
+ipv6: true
+
+find-process-mode: always
+
+unified-delay: true
+tcp-concurrent: true
+
+external-controller: localhost:9090
+external-ui: ui
+external-ui-url: "https://github.com/Zephyruso/zashboard/archive/refs/heads/gh-pages.zip"
+
+profile:
+  store-selected: true
+
+tun:
+  enable: true
+  stack: mixed
+  auto-route: true
+  auto-detect-interface: true
+  dns-hijack:
+    - any:53
+    - tcp://any:53
+
+dns:
+  enable: true
+  ipv6: true
+  cache-algorithm: arc
+  listen: :53
+  enhanced-mode: redir-host
+  # default-nameserver:
+  #   - 223.5.5.5
+  # nameserver-policy:
+  #   "rule-set:cn":
+  #     - https://dns.alidns.com/dns-query
+  #     - https://doh.pub/dns-query
+  # nameserver:
+  #   - tls://223.5.5.5
+  #   - https://dns.alidns.com/dns-query
+  # fallback:
+  #   - tls://1.1.1.1
+  #   - tls://8.8.8.8
+  # fallback-filter:
+  #   geoip: true
+  #   geoip-code: CN
+  #   geosite:
+  #     - gfw
+
+proxies:
+  - name: ⚡ 直连
+    type: direct
+    udp: true
+
+proxy-providers:
+  Local:
+    type: file
+    path: proxies/local.yaml
+    health-check:
+      enable: true
+      url: https://cp.cloudflare.com/generate_204
+      interval: 86400
+
+proxies-anchor:
+  all-proxies: &all-proxies
+    type: select
+    include-all-providers: true
+
+  default-proxies: &default-proxies
+    type: select
+    include-all-providers: true
+    proxies: [默认, 美国, 台湾, 香港, 狮城, 日本, ⚡ 直连]
+
+proxy-groups:
+  # 默认
+  - name: 默认
+    icon: https://raw.githubusercontent.com/ewigl/licons/refs/heads/main/logos/default.png
+    type: select
+    proxies: [自动选择, 美国, 台湾, 香港, 狮城, 日本, ⚡ 直连]
+
+  # 自动选择
+  - name: 自动选择
+    icon: https://raw.githubusercontent.com/ewigl/licons/refs/heads/main/logos/auto.png
+    type: url-test
+    include-all-providers: true
+
+  # 区域
+  - name: 美国
+    icon: https://raw.githubusercontent.com/ewigl/licons/refs/heads/main/flags/us.png
+    <<: *all-proxies
+    filter: "US|🇺🇸|美国|United States"
+
+  - name: 台湾
+    icon: https://raw.githubusercontent.com/ewigl/licons/refs/heads/main/flags/cn.png
+    <<: *all-proxies
+    filter: "TW|🇨🇳|🇹🇼|台湾|Taiwan"
+
+  - name: 香港
+    icon: http://raw.githubusercontent.com/ewigl/licons/refs/heads/main/flags/hk.png
+    <<: *all-proxies
+    filter: "HK|🇭🇰|香港|HongKong|Hong Kong"
+
+  - name: 狮城
+    icon: https://raw.githubusercontent.com/ewigl/licons/refs/heads/main/flags/sg.png
+    <<: *all-proxies
+    filter: "SG|🇸🇬|新加坡|狮城|Singapore"
+
+  - name: 日本
+    icon: https://raw.githubusercontent.com/ewigl/licons/refs/heads/main/flags/jp.png
+    <<: *all-proxies
+    filter: "JP|🇯🇵|日本|Japan"
+
+  # 服务
+  - name: Microsoft
+    icon: https://raw.githubusercontent.com/ewigl/licons/refs/heads/main/logos/microsoft.png
+    <<: *default-proxies
+
+  - name: SteamCN
+    icon: https://raw.githubusercontent.com/ewigl/licons/refs/heads/main/logos/steam.png
+    <<: *all-proxies
+    proxies: [⚡ 直连, 默认, 美国, 台湾, 香港, 狮城, 日本]
+
+  # 自定义
+  - name: Games
+    icon: https://raw.githubusercontent.com/ewigl/licons/refs/heads/main/logos/games.png
+    <<: *all-proxies
+    proxies: [香港, 默认, 美国, 台湾, 狮城, 日本, ⚡ 直连]
+
+  # 全局
+  - name: GLOBAL
+    icon: https://raw.githubusercontent.com/ewigl/licons/refs/heads/main/logos/global.png
+    type: select
+    include-all-providers: true
+    proxies: [默认, 自动选择, 美国, 台湾, 香港, 狮城, 日本, ⚡ 直连]
+
+rule-anchor:
+  domain: &domain { type: http, interval: 86400, behavior: domain, format: mrs }
+  cidr: &cidr { type: http, interval: 86400, behavior: ipcidr, format: mrs }
+
+rule-providers:
+  # Mihomo 规则集: https://github.com/MetaCubeX/meta-rules-dat/blob/meta/geo/geosite
+  ## 域名规则集
+  cn:
+    <<: *domain
+    url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/cn.mrs"
+
+  microsoft:
+    <<: *domain
+    url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/microsoft.mrs"
+
+  private:
+    <<: *domain
+    url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/private.mrs"
+
+  steam@cn:
+    <<: *domain
+    url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/steam@cn.mrs"
+
+  ## IP 规则集
+  cncidr:
+    <<: *cidr
+    url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geoip/cn.mrs"
+
+  privatecidr:
+    <<: *cidr
+    url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geoip/private.mrs"
+
+rules:
+  # 自定规则
+  - PROCESS-NAME,piliplus.exe,DIRECT
+  - PROCESS-NAME,WeChatAppEx.exe,DIRECT
+  - PROCESS-NAME,Weixin.exe,DIRECT
+
+  - PROCESS-NAME,eldenring.exe,Games
+  - PROCESS-NAME,NoRestForTheWicked.exe,Games
+  - PROCESS-NAME,ForzaHorizon4.exe,Games
+
+  # 规则集
+  - RULE-SET,microsoft,Microsoft
+
+  - RULE-SET,private,DIRECT
+  - RULE-SET,privatecidr,DIRECT,no-resolve
+  - RULE-SET,cn,DIRECT
+  - RULE-SET,cncidr,DIRECT,no-resolve
+
+  - RULE-SET,steam@cn,SteamCN
+
+  # 默认
+  - MATCH,默认
