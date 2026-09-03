@@ -2,6 +2,8 @@ from helpers import check_one, codes
 from routelint.model import Severity
 from routelint.rules.cycles import GroupCycles
 from routelint.rules.dns import DnsListenPublic, DnsSanity, TunWithoutDns
+from routelint.rules.inbound import OpenInbound
+from routelint.rules.providers import ProviderHealthCheck, ProviderHttpUrl
 from routelint.rules.references import DuplicateNames, MissingGroupRefs, MissingRuleTargets, Unused
 from routelint.rules.routing import BlockingFinal, BroadBeforeSpecific, GeoipCnViaProxy
 from routelint.rules.security import ControllerExposure, ExternalUi
@@ -253,4 +255,53 @@ def test_broad_before_specific():
 def test_broad_same_target_no_shadow():
     cfg = {"rules": ["IP-CIDR,1.2.3.4/32,DIRECT", "DOMAIN-SUFFIX,example.com,DIRECT", "MATCH,PROXY"]}
     assert check_one(BroadBeforeSpecific(), cfg) == []
+
+
+# --- providers / inbound / sub-rules ---------------------------------------
+
+
+def test_provider_without_health_check():
+    cfg = {"proxy-providers": {"suba": {"type": "http", "url": "https://x"}}}
+    assert codes(check_one(ProviderHealthCheck(), cfg)) == ["PROV001"]
+
+
+def test_provider_with_health_check_ok():
+    cfg = {"proxy-providers": {"suba": {"type": "http", "url": "https://x", "health-check": {"enable": True}}}}
+    assert check_one(ProviderHealthCheck(), cfg) == []
+
+
+def test_provider_http_without_url():
+    cfg = {"proxy-providers": {"suba": {"type": "http"}}}
+    assert codes(check_one(ProviderHttpUrl(), cfg)) == ["PROVU001"]
+
+
+def test_inbound_allow_lan_without_auth():
+    (finding,) = check_one(OpenInbound(), {"allow-lan": True})
+    assert finding.code == "INB001" and finding.severity == Severity.WARN
+
+
+def test_inbound_allow_lan_with_skip_auth_downgrades():
+    (finding,) = check_one(OpenInbound(), {"allow-lan": True, "skip-auth-prefixes": ["192.168.0.0/16"]})
+    assert finding.code == "INB001" and finding.severity == Severity.INFO
+
+
+def test_inbound_allow_lan_with_auth_ok():
+    assert check_one(OpenInbound(), {"allow-lan": True, "authentication": ["user:pass"]}) == []
+
+
+def test_inbound_no_allow_lan_ok():
+    assert check_one(OpenInbound(), {"authentication": []}) == []
+
+
+def test_subrule_reference_missing():
+    cfg = {"rules": ["SUB-RULE,(DOMAIN,example.com),nope"]}
+    assert codes(check_one(MissingRuleTargets(), cfg)) == ["RULE003"]
+
+
+def test_subrule_reference_ok():
+    cfg = {
+        "sub-rules": [{"rules1": ["IP-CIDR,1.1.1.1/32,DIRECT"]}],
+        "rules": ["SUB-RULE,(DOMAIN,example.com),rules1", "MATCH,DIRECT"],
+    }
+    assert check_one(MissingRuleTargets(), cfg) == []
 
